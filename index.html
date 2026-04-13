@@ -1,202 +1,54 @@
-import React, { useState, useEffect } from 'react';
-import { Calculator, ArrowRight, Database, Server, Laptop, History, Trash2 } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>계산기</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1 class="title">계산기</h1>
+      <p class="hint">키보드로도 입력할 수 있어요</p>
+    </header>
 
-const App = () => {
-  const [display, setDisplay] = useState('0');
-  const [equation, setEquation] = useState('');
-  const [logs, setLogs] = useState([]);
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  // API 시뮬레이션 로그 기록 함수
-  const addLog = (method, path, status) => {
-    const newLog = {
-      id: Date.now(),
-      method,
-      path,
-      status,
-      time: new Date().toLocaleTimeString(),
-    };
-    setLogs(prev => [newLog, ...prev].slice(0, 5));
-  };
-
-  const handleNumber = (num) => {
-    if (display === '0') setDisplay(num);
-    else setDisplay(display + num);
-  };
-
-  const handleOperator = (op) => {
-    setEquation(display + ' ' + op + ' ');
-    setDisplay('0');
-    addLog('POST', '/api/calculate/pending', 201);
-  };
-
-  // eval 대신 안전하게 계산을 처리하는 함수
-  const safeCalculate = (exp) => {
-    const tokens = exp.replace('×', '*').replace('÷', '/').split(' ');
-    if (tokens.length < 3) return parseFloat(tokens[0]);
-
-    const num1 = parseFloat(tokens[0]);
-    const operator = tokens[1];
-    const num2 = parseFloat(tokens[2]);
-
-    switch (operator) {
-      case '+': return num1 + num2;
-      case '-': return num1 - num2;
-      case '*': return num1 * num2;
-      case '/': return num2 !== 0 ? num1 / num2 : 'Error';
-      default: return 'Error';
-    }
-  };
-
-  const calculate = () => {
-    if (!equation) return;
-    
-    setIsProcessing(true);
-    const fullEquation = equation + display;
-    
-    // 백엔드 통신 시뮬레이션 (네트워크 지연 재현)
-    setTimeout(() => {
-      try {
-        const result = safeCalculate(fullEquation);
-        setDisplay(String(result));
-        setEquation('');
-        addLog('GET', `/api/result?val=${result}`, 200);
-      } catch (e) {
-        setDisplay('Error');
-        addLog('GET', '/api/error', 400);
-      }
-      setIsProcessing(false);
-    }, 600);
-  };
-
-  const clear = () => {
-    setDisplay('0');
-    setEquation('');
-    addLog('DELETE', '/api/memory', 204);
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans text-slate-800">
-      <div className="max-w-4xl mx-auto space-y-8">
-        
-        {/* 헤더 섹션 */}
-        <header className="flex items-center gap-3 border-b border-slate-200 pb-6">
-          <div className="bg-indigo-600 p-2 rounded-xl text-white">
-            <Calculator size={28} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">REST API 계산기</h1>
-            <p className="text-slate-500 text-sm">계산 버튼을 누를 때 일어나는 데이터 흐름을 확인해보세요.</p>
-          </div>
-        </header>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* 왼쪽: 계산기 본체 */}
-          <div className="bg-white p-6 rounded-3xl shadow-xl border border-slate-200">
-            <div className="bg-slate-900 rounded-2xl p-6 mb-6 text-right relative overflow-hidden">
-              <div className="text-slate-400 text-sm h-6 mb-1 font-mono">{equation}</div>
-              <div className="text-white text-4xl font-bold tracking-wider truncate">
-                {isProcessing ? <span className="animate-pulse">...</span> : display}
-              </div>
-              <div className="absolute -top-10 -left-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl"></div>
-            </div>
-
-            <div className="grid grid-cols-4 gap-3">
-              <button onClick={clear} className="col-span-2 p-4 bg-red-50 text-red-600 font-bold rounded-2xl hover:bg-red-100 transition-colors">AC</button>
-              <button onClick={() => handleOperator('÷')} className="p-4 bg-indigo-50 text-indigo-600 font-bold rounded-2xl hover:bg-indigo-100 transition-colors">÷</button>
-              <button onClick={() => handleOperator('×')} className="p-4 bg-indigo-50 text-indigo-600 font-bold rounded-2xl hover:bg-indigo-100 transition-colors">×</button>
-              
-              {[7, 8, 9].map(n => <button key={n} onClick={() => handleNumber(String(n))} className="p-4 bg-slate-50 hover:bg-slate-100 font-semibold rounded-2xl transition-colors">{n}</button>)}
-              <button onClick={() => handleOperator('-')} className="p-4 bg-indigo-50 text-indigo-600 font-bold rounded-2xl hover:bg-indigo-100 transition-colors">-</button>
-              
-              {[4, 5, 6].map(n => <button key={n} onClick={() => handleNumber(String(n))} className="p-4 bg-slate-50 hover:bg-slate-100 font-semibold rounded-2xl transition-colors">{n}</button>)}
-              <button onClick={() => handleOperator('+')} className="p-4 bg-indigo-50 text-indigo-600 font-bold rounded-2xl hover:bg-indigo-100 transition-colors">+</button>
-              
-              {[1, 2, 3].map(n => <button key={n} onClick={() => handleNumber(String(n))} className="p-4 bg-slate-50 hover:bg-slate-100 font-semibold rounded-2xl transition-colors">{n}</button>)}
-              <button onClick={calculate} className="row-span-2 p-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95">=</button>
-              
-              <button onClick={() => handleNumber('0')} className="col-span-2 p-4 bg-slate-50 hover:bg-slate-100 font-semibold rounded-2xl transition-colors">0</button>
-              <button onClick={() => handleNumber('.')} className="p-4 bg-slate-50 hover:bg-slate-100 font-semibold rounded-2xl transition-colors">.</button>
-            </div>
-          </div>
-
-          {/* 오른쪽: 네트워크 흐름 모니터 */}
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-3xl shadow-md border border-slate-200">
-              <h3 className="text-sm font-bold text-slate-400 uppercase mb-6 flex items-center gap-2">
-                <ArrowRight size={16} /> 서비스 동작 흐름 (Live)
-              </h3>
-              <div className="flex justify-between items-center relative px-4">
-                <div className={`flex flex-col items-center gap-2 transition-transform ${isProcessing ? 'scale-110' : ''}`}>
-                  <div className={`p-3 rounded-full ${isProcessing ? 'bg-indigo-600 text-white animate-bounce' : 'bg-slate-100 text-slate-400'}`}>
-                    <Laptop size={24} />
-                  </div>
-                  <span className="text-xs font-bold text-slate-600">프론트</span>
-                </div>
-                
-                <div className="flex-1 h-[2px] bg-slate-100 mx-2 relative">
-                  {isProcessing && <div className="absolute top-0 left-0 h-full bg-indigo-500 animate-[progress_0.6s_ease-in-out_infinite]"></div>}
-                </div>
-
-                <div className={`flex flex-col items-center gap-2 transition-transform ${isProcessing ? 'scale-110' : ''}`}>
-                  <div className={`p-3 rounded-full ${isProcessing ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                    <Server size={24} />
-                  </div>
-                  <span className="text-xs font-bold text-slate-600">백엔드</span>
-                </div>
-
-                <div className="flex-1 h-[2px] bg-slate-100 mx-2 relative">
-                  {isProcessing && <div className="absolute top-0 left-0 h-full bg-indigo-500 animate-[progress_0.6s_ease-in-out_infinite]"></div>}
-                </div>
-
-                <div className={`flex flex-col items-center gap-2 transition-transform ${isProcessing ? 'scale-110' : ''}`}>
-                  <div className={`p-3 rounded-full ${isProcessing ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                    <Database size={24} />
-                  </div>
-                  <span className="text-xs font-bold text-slate-600">DB</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-slate-900 rounded-3xl shadow-xl border border-slate-800 p-6 overflow-hidden">
-              <h3 className="text-sm font-bold text-indigo-400 uppercase mb-4 flex items-center gap-2">
-                <History size={16} /> API Call History
-              </h3>
-              <div className="space-y-3 font-mono text-xs">
-                {logs.length === 0 && <p className="text-slate-600 italic">계산기를 작동하면 로그가 표시됩니다...</p>}
-                {logs.map(log => (
-                  <div key={log.id} className="flex items-center justify-between border-b border-slate-800 pb-2 animate-in fade-in slide-in-from-left-2">
-                    <div className="flex gap-3">
-                      <span className={`font-bold px-2 py-0.5 rounded ${
-                        log.method === 'GET' ? 'bg-green-500/20 text-green-400' : 
-                        log.method === 'POST' ? 'bg-blue-500/20 text-blue-400' : 'bg-red-500/20 text-red-400'
-                      }`}>
-                        {log.method}
-                      </span>
-                      <span className="text-slate-300">{log.path}</span>
-                    </div>
-                    <div className="flex gap-3 items-center">
-                      <span className="text-indigo-400">{log.status}</span>
-                      <span className="text-slate-600 text-[10px]">{log.time}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+    <main class="calculator" role="application" aria-label="계산기">
+      <div class="display-wrap">
+        <div class="expression" id="expression" aria-live="polite"></div>
+        <div class="result" id="display" aria-live="polite">0</div>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes progress {
-          0% { left: 0; width: 0; }
-          50% { left: 0; width: 100%; }
-          100% { left: 100%; width: 0; }
-        }
-      `}} />
-    </div>
-  );
-};
+      <div class="keys" id="keys">
+        <button type="button" class="key key-fn" data-action="clear">AC</button>
+        <button type="button" class="key key-fn" data-action="sign">±</button>
+        <button type="button" class="key key-fn" data-action="percent">%</button>
+        <button type="button" class="key key-op" data-action="operator" data-value="/">÷</button>
 
-export default App;
+        <button type="button" class="key key-num" data-action="digit" data-value="7">7</button>
+        <button type="button" class="key key-num" data-action="digit" data-value="8">8</button>
+        <button type="button" class="key key-num" data-action="digit" data-value="9">9</button>
+        <button type="button" class="key key-op" data-action="operator" data-value="*">×</button>
+
+        <button type="button" class="key key-num" data-action="digit" data-value="4">4</button>
+        <button type="button" class="key key-num" data-action="digit" data-value="5">5</button>
+        <button type="button" class="key key-num" data-action="digit" data-value="6">6</button>
+        <button type="button" class="key key-op" data-action="operator" data-value="-">−</button>
+
+        <button type="button" class="key key-num" data-action="digit" data-value="1">1</button>
+        <button type="button" class="key key-num" data-action="digit" data-value="2">2</button>
+        <button type="button" class="key key-num" data-action="digit" data-value="3">3</button>
+        <button type="button" class="key key-op" data-action="operator" data-value="+">+</button>
+
+        <button type="button" class="key key-num key-zero" data-action="digit" data-value="0">0</button>
+        <button type="button" class="key key-num" data-action="decimal">.</button>
+        <button type="button" class="key key-op key-equals" data-action="equals">=</button>
+      </div>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
